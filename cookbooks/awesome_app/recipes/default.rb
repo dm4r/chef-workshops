@@ -6,8 +6,8 @@
 #
 # All rights reserved - Do Not Redistribute
 #
-# Make sure the apt cache is up to date with the followinf Recipe
-include_recipe 'apt::default'
+# Make sure the apt cache is up to date with the following Recipe
+include_recipe "apt"
 
 # #!/usr/bin/python
 # # -*- coding: utf-8 -*-
@@ -15,6 +15,30 @@ include_recipe 'apt::default'
 # import os, sys, getpass, binascii
 #
 # # The following script assumes that apache2, mysql, and unzip have been installed.
+package 'apache2' do
+  action :install
+end
+
+package 'mysql-server' do
+  action :install
+end
+
+package 'unzip' do
+  action :install
+end
+
+package 'libapache2-mod-wsgi' do
+  action :install
+end
+
+package 'python-pip' do
+  action :install
+end
+
+package 'python-mysqldb' do
+  action :install
+end
+
 # # 1. wget https://github.com/colincam/Awesome-Appliance-Repair/archive/master.zip
 # # 2. unzip master.zip
 # # 3. cd into Awesome-Appliance-Repair
