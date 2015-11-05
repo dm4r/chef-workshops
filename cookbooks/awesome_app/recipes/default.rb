@@ -40,12 +40,28 @@ end
 #
 #     Popen(['chown', '-R', 'www-data:www-data', '/var/www/AAR'], shell=False).wait()
 #
-directory "/var/www/AAR" do
-  owner "www-data"
-  group "www-data"
-  mode "0644"
-  action :create
+remote_file "/tmp/master.zip" do
+  source "https://github.com/colincam/Awesome-Appliance-Repair/archive/master.zip"
+  mode "0755"
 end
+
+execute "unzip_master_file" do
+  command "unzip master.zip"
+  cwd "/tmp"
+  not_if { File.exists?("/tmp/Awesome-Appliance-Repair-master/AARinstall.py") }
+end
+
+execute "mv_AAR_folder" do
+  command "mv AAR /var/www/"
+  cwd "/tmp/Awesome-Appliance-Repair-master"
+  only_if { File.exists?("/tmp/Awesome-Appliance-Repair-master/AAR") }
+end
+
+execute "chown_data-www" do
+  command "chown -R www-data:www-data /var/www/AAR"
+  user "root"
+end
+
 # # apt-get the stuff we need
 #     proc = Popen([
 #         'apt-get', 'install', '-y',
@@ -100,10 +116,11 @@ python_pip "flask"
 #     f.close()
 #
 
- template "/etc/apache2/sites-enabled/AAR-apache.conf" do
-   source "AAR-apache.conf.erb"
-   mode "0644"
- end
+# TODO Put aside to complete later.
+# template "/etc/apache2/sites-enabled/AAR-apache.conf" do
+#   source "AAR-apache.conf.erb"
+#   mode "0644"
+# end
 
 # # Generate AAR_config.py with secrets
 #     f = open('/var/www/AAR/AAR_config.py', 'w')
