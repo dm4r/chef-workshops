@@ -15,27 +15,15 @@ include_recipe "apt"
 # import os, sys, getpass, binascii
 #
 # # The following script assumes that apache2, mysql, and unzip have been installed.
-package 'apache2' do
+package "apache2" do
   action :install
 end
 
-package 'mysql-server' do
+package "mysql-server" do
   action :install
 end
 
-package 'unzip' do
-  action :install
-end
-
-package 'libapache2-mod-wsgi' do
-  action :install
-end
-
-package 'python-pip' do
-  action :install
-end
-
-package 'python-mysqldb' do
+package "unzip" do
   action :install
 end
 
@@ -48,10 +36,16 @@ end
 # # 7. manually execute: apachectl graceful
 #
 # if __name__ == '__main__':
-#     root_dbpswd = getpass.getpass('enter the mysql root user password: ')
+# TODO    root_dbpswd = getpass.getpass('enter the mysql root user password: ')
 #
 #     Popen(['chown', '-R', 'www-data:www-data', '/var/www/AAR'], shell=False).wait()
 #
+directory "/var/www/AAR" do
+  owner "www-data"
+  group "www-data"
+  mode "0644"
+  action :create
+end
 # # apt-get the stuff we need
 #     proc = Popen([
 #         'apt-get', 'install', '-y',
@@ -60,9 +54,23 @@ end
 #         'python-mysqldb'], shell=False)
 #     proc.wait()
 #
+package "libapache2-mod-wsgi" do
+  action :install
+end
+
+package "python-pip" do
+  action :install
+end
+
+package "python-mysqldb" do
+  action :install
+end
+
 # # pip install flask
 #     Popen(['pip', 'install', 'flask'], shell=False).wait()
 #
+python_pip "flask"
+
 # # Generate the apache config file in sites-enabled
 #     Popen(['apachectl', 'stop'], shell=False).wait()
 #
@@ -91,6 +99,12 @@ end
 #     """)
 #     f.close()
 #
+
+ template "/etc/apache2/sites-enabled/AAR-apache.conf" do
+   source "AAR-apache.conf.erb"
+   mode "0644"
+ end
+
 # # Generate AAR_config.py with secrets
 #     f = open('/var/www/AAR/AAR_config.py', 'w')
 #     appdbpw = binascii.b2a_base64(os.urandom(6)).strip('\n')
@@ -121,3 +135,7 @@ end
 #     cur.execute("GRANT CREATE,INSERT,DELETE,UPDATE,SELECT on AARdb.* to aarapp@localhost")
 #     cur.close()
 #     db.close()#
+
+service "apache2" do
+  action [:enable, :start]
+end
