@@ -8,3 +8,5 @@ version          '0.1.0'
 
 depends 'apt'
 depends 'python'
+depends 'database'
+depends 'mysql2_chef_gem'

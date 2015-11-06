@@ -51,13 +51,14 @@ end
 # # 7. manually execute: apachectl graceful
 #
 # if __name__ == '__main__':
-# TODO    root_dbpswd = getpass.getpass('enter the mysql root user password: ')
+#     root_dbpswd = getpass.getpass('enter the mysql root user password: ')
 #
 #     Popen(['chown', '-R', 'www-data:www-data', '/var/www/AAR'], shell=False).wait()
 #
 remote_file "/tmp/master.zip" do
   source "https://github.com/colincam/Awesome-Appliance-Repair/archive/master.zip"
   mode "0755"
+  not_if { File.exists?("/tmp/master.zip") }
 end
 
 execute "unzip_master_file" do
@@ -119,11 +120,11 @@ python_pip "Flask"
 #     f.close()
 #
 
-# TODO Put aside to complete later.
-# template "/etc/apache2/sites-enabled/AAR-apache.conf" do
-#   source "AAR-apache.conf.erb"
-#   mode "0644"
-# end
+template "/etc/apache2/sites-enabled/AAR-apache.conf" do
+  source "AAR-apache.conf.erb"
+  mode "0644"
+  not_if { File.exists?("/etc/apache2/sites-enabled/AAR-apache.conf") }
+end
 
 # # Generate AAR_config.py with secrets
 #     f = open('/var/www/AAR/AAR_config.py', 'w')
@@ -155,20 +156,53 @@ python_pip "Flask"
 #     cur.execute("GRANT CREATE,INSERT,DELETE,UPDATE,SELECT on AARdb.* to aarapp@localhost")
 #     cur.close()
 #     db.close()#
+mysql2_chef_gem 'default' do
+  action :install
+end
+
+execute 'seed_AARdb_database' do
+  command "mysql -h 127.0.0.1 -u root < /tmp/Awesome-Appliance-Repair-master/make_AARdb.sql"
+  not_if  "mysql -h 127.0.0.1 -u root -D AARdb -e 'describe customer;'"
+end
+
+mysql_database_user 'aarapp' do
+  connection(
+    :host => '127.0.0.1',
+    :username => 'root',
+    :password => ''
+  )
+  password 'super_secret'
+  database_name 'AARdb'
+  privileges [:create, :insert, :delete, :update, :select]
+  action [:create, :grant]
+end
+
+template "/var/www/AAR/AAR_config.py" do
+  source "AAR_config.py.erb"
+  mode "0644"
+  not_if { File.exists?("/var/www/AAR/AAR_config.py") }
+end
+
+execute "disable_default_apache2_site" do
+  command "a2dissite default"
+  cwd "/etc/apache2/sites-enabled"
+  only_if { File.exists?("/etc/apache2/sites-enabled/000-default") }
+  notifies :restart, "service[apache2]"
+end
 
 service "apache2" do
   action [:enable, :start]
 end
 
-# Time for an ugly short-cut hack to just execute the Python script!
-bash "modify_root_password" do
-    user "root"
-    cwd "/tmp/Awesome-Appliance-Repair-master"
-    code <<-EOH
-    /usr/bin/expect -c 'spawn /usr/bin/python /tmp/Awesome-Appliance-Repair-master/AARinstall.py
-    expect "enter the mysql root user password: "
-    send "\r"
-    expect eof'
-    EOH
-    notifies :restart, "service[apache2]"
-end
+# # Time for an ugly short-cut hack to just execute the Python installer script!
+# bash "modify_root_password" do
+#     user "root"
+#     cwd "/tmp/Awesome-Appliance-Repair-master"
+#     code <<-EOH
+#     /usr/bin/expect -c 'spawn /usr/bin/python /tmp/Awesome-Appliance-Repair-master/AARinstall.py
+#     expect "enter the mysql root user password: "
+#     send "\r"
+#     expect eof'
+#     EOH
+#     notifies :restart, "service[apache2]"
+# end
