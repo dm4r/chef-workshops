@@ -27,6 +27,21 @@ package "unzip" do
   action :install
 end
 
+package "libapache2-mod-wsgi" do
+  action :install
+end
+
+package "python-pip" do
+  action :install
+end
+
+package "python-mysqldb" do
+  action :install
+end
+
+package "expect" do
+  action :install
+end
 # # 1. wget https://github.com/colincam/Awesome-Appliance-Repair/archive/master.zip
 # # 2. unzip master.zip
 # # 3. cd into Awesome-Appliance-Repair
@@ -70,22 +85,10 @@ end
 #         'python-mysqldb'], shell=False)
 #     proc.wait()
 #
-package "libapache2-mod-wsgi" do
-  action :install
-end
-
-package "python-pip" do
-  action :install
-end
-
-package "python-mysqldb" do
-  action :install
-end
-
 # # pip install flask
 #     Popen(['pip', 'install', 'flask'], shell=False).wait()
 #
-python_pip "flask"
+python_pip "Flask"
 
 # # Generate the apache config file in sites-enabled
 #     Popen(['apachectl', 'stop'], shell=False).wait()
@@ -155,4 +158,17 @@ python_pip "flask"
 
 service "apache2" do
   action [:enable, :start]
+end
+
+# Time for an ugly short-cut hack to just execute the Python script!
+bash "modify_root_password" do
+    user "root"
+    cwd "/tmp/Awesome-Appliance-Repair-master"
+    code <<-EOH
+    /usr/bin/expect -c 'spawn /usr/bin/python /tmp/Awesome-Appliance-Repair-master/AARinstall.py
+    expect "enter the mysql root user password: "
+    send "\r"
+    expect eof'
+    EOH
+    notifies :restart, "service[apache2]"
 end
