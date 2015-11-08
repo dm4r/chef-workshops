@@ -1,7 +1,9 @@
 ---
 driver:
-#  name: vagrant
+  name: vagrant
   name: digitalocean
+  # name: docker
+  # require_chef_omnibus: true
 
   network:
 #    - ["forwarded_port", {guest: 80, host: 8080}]
@@ -11,11 +13,26 @@ provisioner:
   name: chef_zero
 
 platforms:
+# Docker platform specifics
+  # - name: ubuntu-12.04
+  #   driver_config:
+  #     image: ubuntu:12.04
+  #     socket: tcp://192.168.99.100:2376
+  #     use_cache: true
+  #   driver:
+  #     use_sudo: false
+  #     # share your workstation's cookbooks with the Docker container
+  #     volume: ~/play_chef/chef-repo/cookbooks:/mnt/host-cookbooks
+  #     forward:
+  #       - 80:80
+
+# Virtualbox specifics
   # - name: ubuntu-12.04
   #   driver_config:
   #     customize:
   #       memory: 1024
 
+# Digital Ocean specifics
   - name: ubuntu-12.04
     driver_config:
       size: 1gb
