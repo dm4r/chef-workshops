@@ -70,7 +70,7 @@ end
 execute "mv_AAR_folder" do
   command "mv AAR /var/www/"
   cwd "/tmp/Awesome-Appliance-Repair-master"
-  only_if { File.exists?("/tmp/Awesome-Appliance-Repair-master/AAR") }
+  not_if { File.exists?("/var/www/AAR") }
 end
 
 execute "chown_data-www" do
